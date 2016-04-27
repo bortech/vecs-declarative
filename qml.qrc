@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>BorDelayButton.qml</file>
+        <file>BorCheckButton.qml</file>
+        <file>BorToolButton.qml</file>
+        <file>busy_dark.png</file>
+        <file>helper.js</file>
+        <file>vecs_icon.svg</file>
+        <file>BorGauge.qml</file>
+        <file>BorSlider.qml</file>
+    </qresource>
+</RCC>
