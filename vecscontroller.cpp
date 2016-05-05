@@ -50,6 +50,9 @@ void VecsController::startSession()
         case VecsDevice::RoleDoctor:
             if (dev->connectionState() == VecsDevice::StateDisconnected)
                 dev->connectToDevice();
+            else if (dev->connectionState() == VecsDevice::StateConnected)
+                if (dev->mpuState())
+                    dev->mpuStop();
             break;
         case VecsDevice::RolePatientHand:
         case VecsDevice::RolePatientBack:
