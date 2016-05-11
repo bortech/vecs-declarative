@@ -145,6 +145,7 @@ private slots:
     void serviceStateChanged(QLowEnergyService::ServiceState state);
     void characteristicNotification(const QLowEnergyCharacteristic &c, const QByteArray &v);
     void characteristicRead(const QLowEnergyCharacteristic &c, const QByteArray &v);
+    void characteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &v);
 
 private:
     QLowEnergyService *addService(const QBluetoothUuid &uuid);
@@ -203,6 +204,8 @@ private:
     QLowEnergyService *m_batteryService;
     QLowEnergyService *m_keyService;
     QLowEnergyService *m_mpuService;
+
+    bool m_charWriteFlag;
 };
 
 #endif // VECSDEVICE_H

@@ -1,6 +1,7 @@
 #include "vecsdevice.h"
 #include <QDebug>
 #include <QDataStream>
+#include <QCoreApplication>
 
 VecsDevice::VecsDevice(QObject *parent) :
     QObject(parent)
@@ -173,6 +174,12 @@ QLowEnergyService *VecsDevice::addService(const QBluetoothUuid &uuid)
     connect(service, &QLowEnergyService::stateChanged, this, &VecsDevice::serviceStateChanged);
     connect(service, &QLowEnergyService::characteristicRead, this, &VecsDevice::characteristicRead);
     connect(service, &QLowEnergyService::characteristicChanged, this, &VecsDevice::characteristicNotification);
+    connect(service, &QLowEnergyService::characteristicWritten, this, &VecsDevice::characteristicWritten);
+    connect(service, static_cast<void(QLowEnergyService::*)(QLowEnergyService::ServiceError)>(&QLowEnergyService::error),
+          [=](QLowEnergyService::ServiceError newError) {
+        m_charWriteFlag = true;
+        qDebug() << "service error: " << newError;
+    });
     service->discoverDetails();
 
     return service;
@@ -209,6 +216,8 @@ bool VecsDevice::enableNotifications(QLowEnergyService *service, const QBluetoot
 
 bool VecsDevice::writeCharacteristic(QLowEnergyService *service, const QBluetoothUuid &uuid, quint8 value)
 {
+    m_charWriteFlag = false;
+
     if (service == nullptr)
         return false;
     if (service->state() != QLowEnergyService::ServiceDiscovered)
@@ -220,8 +229,12 @@ bool VecsDevice::writeCharacteristic(QLowEnergyService *service, const QBluetoot
         return false;
     }
 
-    service->writeCharacteristic(c, QByteArray::fromRawData((const char *)&value, 1), QLowEnergyService::WriteWithoutResponse);
-    return true;
+    service->writeCharacteristic(c, QByteArray::fromRawData((const char *)&value, 1));
+    while (!m_charWriteFlag) {
+        QCoreApplication::processEvents();
+    }
+
+    return (service->error() == QLowEnergyService::NoError);
 }
 
 void VecsDevice::parseMpuData(const QByteArray &data)
@@ -419,6 +432,18 @@ void VecsDevice::characteristicRead(const QLowEnergyCharacteristic &c, const QBy
             }
             break;
     }
+}
+
+void VecsDevice::characteristicWritten(const QLowEnergyCharacteristic &c, const QByteArray &v)
+{
+    Q_UNUSED(v)
+
+    qDebug() <<  QString("[%1] written %2 (uuid: 0x%3)")
+                 .arg(this->address())
+                 .arg(c.name())
+                 .arg(c.uuid().toUInt16(), 4, 16, QLatin1Char('0'));
+
+    m_charWriteFlag = true;
 }
 
 VecsDevice::AccelRange VecsDevice::accelRange() const
