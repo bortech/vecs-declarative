@@ -5,6 +5,7 @@
 #include <QAbstractListModel>
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothDeviceInfo>
+#include <QSettings>
 #include "vecsdevice.h"
 
 class VecsController : public QObject
@@ -29,6 +30,7 @@ public slots:
     void startScan();
     void setMessage(const QString &message);
     void startSession();
+    void saveSettings();
 
 private slots:
     void addDevice(const QBluetoothDeviceInfo&device);
@@ -46,6 +48,7 @@ private:
 
     QList<VecsDevice *> m_devices;
     QBluetoothDeviceDiscoveryAgent *m_agent;
+    QSettings *m_settings;
 };
 
 #endif // VECSCONTROLLER_H

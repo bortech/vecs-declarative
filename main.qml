@@ -50,6 +50,14 @@ Window {
                         vecs.startSession();
                     }
                 }
+
+                BorToolButton {
+                    height: toolBar.height
+                    text: "Save session"
+                    onClicked: {
+                        vecs.saveSettings();
+                    }
+                }
             }
         }
 

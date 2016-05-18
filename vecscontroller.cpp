@@ -12,6 +12,8 @@ VecsController::VecsController(QObject *parent) :
             this, SLOT(deviceScanError(QBluetoothDeviceDiscoveryAgent::Error)));
     connect(m_agent, SIGNAL(finished()),
             this, SLOT(scanFinished()));    
+
+    m_settings = new QSettings("krisaf", "vecs-controller", this);
 }
 
 VecsController::~VecsController()
@@ -96,13 +98,36 @@ void VecsController::addDevice(const QBluetoothDeviceInfo &device)
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration &&
         device.name().contains("VE Control Sensor")) {
 
-        VecsDevice *vecs = new VecsDevice(device.address(), device.rssi(), this);
-
+        VecsDevice *vecs = new VecsDevice(device.address(), device.rssi(), this);                      
         m_devices.append(vecs);
         emit devicesUpdated();
 
+        m_settings->beginGroup(vecs->address());
+        vecs->setRole((VecsDevice::DeviceRole)m_settings->value("role", VecsDevice::RoleUndefined).toInt());
+        vecs->setAccelRange((VecsDevice::AccelRange)m_settings->value("accel_range", VecsDevice::ACC_2G).toInt());
+        vecs->setGyroRange((VecsDevice::GyroRange)m_settings->value("gyro_range", VecsDevice::GYRO_250DEGS).toInt());
+        vecs->setInterval(m_settings->value("interval", 5000).toInt());
+        vecs->setMaxReconnections(m_settings->value("reconnections", 3).toInt());
+        vecs->setMpuRate(m_settings->value("mpu_rate", 100).toInt());
+        m_settings->endGroup();
+
         setMessage(QString("Device found [%1]").arg(device.address().toString()));
     }
+}
+
+void VecsController::saveSettings()
+{
+    for (const auto& dev : m_devices) {
+        m_settings->beginGroup(dev->address());
+        m_settings->setValue("role", dev->role());
+        m_settings->setValue("accel_range", dev->accelRange());
+        m_settings->setValue("gyro_range", dev->gyroRange());
+        m_settings->setValue("interval", dev->interval());
+        m_settings->setValue("reconnections", dev->maxReconnections());
+        m_settings->setValue("mpu_rate", dev->mpuRate());
+        m_settings->endGroup();
+    }
+    m_settings->sync();
 }
 
 void VecsController::scanFinished()
